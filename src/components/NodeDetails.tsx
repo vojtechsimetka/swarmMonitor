@@ -38,7 +38,7 @@ export default (props: INodeDetailsProps) => (
                   <td>
                     <strong>Chequebook Address:</strong>
                   </td>
-                  <td>{node.address}</td>
+                  <td>{node.chequebookAddress}</td>
                 </tr>
                 <tr>
                   <td>

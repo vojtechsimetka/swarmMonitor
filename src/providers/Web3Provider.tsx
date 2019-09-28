@@ -40,7 +40,7 @@ const { Provider, Consumer } = createContext<IWeb3Provider>({
 
 interface IWeb3ProviderProps {}
 interface IWeb3ProviderState {
-  connection?: any;
+  connection?: WebSocket;
   interval?: any;
   updatedAt?: Date;
   peers: Map<string, Peer>;
@@ -79,6 +79,13 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
     connection.onmessage = this.parseResponse;
     this.setState({ connection });
   }
+  componentWillUnmount() {
+    const { connection } = this.state;
+
+    if (connection && connection.readyState === WebSocket.OPEN)
+      connection.close();
+  }
+
   onClose() {
     const { interval } = this.state;
     if (interval) {
@@ -92,9 +99,10 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
 
   makeRequests() {
     const { connection } = this.state;
-    REQUESTS.forEach((method, i) =>
-      connection.send(JSON.stringify({ method, id: i }))
-    );
+    if (connection && connection.readyState === WebSocket.OPEN)
+      REQUESTS.forEach((method, i) =>
+        connection.send(JSON.stringify({ method, id: i }))
+      );
   }
 
   parseResponse(e) {
