@@ -10,7 +10,7 @@ const App: React.FC = () => {
     <Web3Provider.Provider>
       <Container>
         <NodeDetails />
-        <Example />
+        {/*<Example />*/}
         <div style={{ flexGrow: 1 }} />
       </Container>
     </Web3Provider.Provider>
