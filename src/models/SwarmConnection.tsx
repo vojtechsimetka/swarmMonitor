@@ -1,4 +1,3 @@
-import React, { Component, createContext } from "react";
 import Cheque, { IChequeParams } from "models/Cheque";
 import Peer from "models/Peer";
 import Node from "models/Node";
@@ -16,111 +15,110 @@ const REQUESTS = [
   EREQUEST.RECEIVED_CHEQUES
 ];
 
+export enum ESTATUS {
+  ACTIVE,
+  CLOSED
+}
+
 type Response<T> = {
   id: number;
   result: { [key: string]: T };
 };
 
-export interface IWeb3Provider {
-  actions: {};
-  state: {
-    peers: Array<Peer>;
-    updatedAt?: Date;
-    node: Node;
-  };
-}
-
-const { Provider, Consumer } = createContext<IWeb3Provider>({
-  actions: {},
-  state: {
-    peers: [],
-    node: new Node()
-  }
-});
-
-interface IWeb3ProviderProps {}
-interface IWeb3ProviderState {
-  connection?: WebSocket;
-  interval?: any;
+class SwarmConnection {
+  private connection?: WebSocket;
+  private interval?: any;
+  private _peers: Map<string, Peer>;
+  private forceUpdate: () => void;
   updatedAt?: Date;
-  peers: Map<string, Peer>;
-  node: {
-    address: string;
-    chequebookAddress: string;
-    currentHoneyBalance: number;
-    totalHoneySent: number;
-    totalHoneyReceived: number;
-    totalChequesSent: number;
-    totalChequesReceived: number;
-  };
-}
+  node: Node;
+  status: ESTATUS;
+  message?: string;
+  readonly connectionString: string;
+  readonly label: string;
 
-class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
-  constructor(props: object) {
-    super(props);
+  constructor(
+    connectionString: string,
+    label: string,
+    forceUpdate: () => void
+  ) {
+    this.forceUpdate = forceUpdate;
+    this.connectionString = connectionString;
+    this.label = label;
+    this._peers = new Map();
+    this.node = new Node();
+    this.status = ESTATUS.CLOSED;
 
-    this.state = {
-      peers: new Map(),
-      node: new Node()
-    };
     this.makeRequests = this.makeRequests.bind(this);
     this.parseResponse = this.parseResponse.bind(this);
     this.onClose = this.onClose.bind(this);
-  }
-  componentDidMount() {
-    const connection = new WebSocket("ws://127.0.0.1:8546");
+    this.onError = this.onError.bind(this);
+    this.close = this.close.bind(this);
+
+    const connection = new WebSocket(connectionString);
 
     connection.onopen = () => {
+      this.status = ESTATUS.ACTIVE;
       this.makeRequests();
-      this.setState({ interval: setInterval(this.makeRequests, 1000) });
+      this.interval = setInterval(this.makeRequests, 1000);
     };
     connection.onclose = this.onClose;
     connection.onerror = this.onError;
     connection.onmessage = this.parseResponse;
-    this.setState({ connection });
+    this.connection = connection;
   }
-  componentWillUnmount() {
-    const { connection } = this.state;
+
+  get peers() {
+    return Array.from(this._peers.values());
+  }
+
+  close() {
+    const { connection } = this;
 
     if (connection && connection.readyState === WebSocket.OPEN)
       connection.close();
   }
 
-  onClose() {
-    const { interval } = this.state;
+  private onClose(e: CloseEvent) {
+    this.status = ESTATUS.CLOSED;
+    console.log(e);
+    this.message = `${e.code}: ${e.reason}`;
+    const { interval } = this;
     if (interval) {
       clearInterval(interval);
-      this.setState({ interval: undefined });
+      this.interval = undefined;
     }
   }
-  onError(e) {
-    console.log(e);
+  private onError(e: Event) {
+    this.status = ESTATUS.CLOSED;
+    console.error(e);
+    this.forceUpdate();
   }
 
-  makeRequests() {
-    const { connection } = this.state;
+  private makeRequests() {
+    const { connection } = this;
     if (connection && connection.readyState === WebSocket.OPEN)
       REQUESTS.forEach((method, i) =>
         connection.send(JSON.stringify({ method, id: i }))
       );
   }
 
-  parseResponse(e) {
+  private parseResponse(e) {
     const data = JSON.parse(e.data);
     if (data) {
-      const { peers, node } = this.state;
+      const { _peers, node } = this;
       switch (REQUESTS[data.id]) {
         case EREQUEST.BALANCES: {
           const d: Response<number> = JSON.parse(e.data);
           let b = 0;
           Object.entries(d.result).forEach(([key, balance]) => {
-            const r = peers.get(key);
+            const r = _peers.get(key);
             if (r) r.balance = balance;
-            else peers.set(key, new Peer({ balance, swarmAddress: key }));
+            else _peers.set(key, new Peer({ balance, swarmAddress: key }));
             b += balance;
           });
           node.currentHoneyBalance = b;
-          this.setState({ peers, node, updatedAt: new Date() });
+          this.updatedAt = new Date();
           break;
         }
         case EREQUEST.SENT_CHEQUES:
@@ -129,7 +127,7 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
             let totalHoneySent = 0;
             Object.entries(d.result).forEach(([key, cheque]) => {
               if (cheque) {
-                const r = peers.get(key);
+                const r = _peers.get(key);
                 if (r) {
                   if (r.sentCheque) {
                     r.sentCheque.cumulativePayout = cheque.CumulativePayout;
@@ -139,7 +137,7 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
                     r.sentCheque = new Cheque(cheque);
                   }
                 } else
-                  peers.set(
+                  _peers.set(
                     key,
                     new Peer({
                       swarmAddress: key,
@@ -154,7 +152,7 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
             node.totalChequesSent = Math.floor(
               totalHoneySent / PAYMENT_THRESHOLD
             );
-            this.setState({ peers, updatedAt: new Date(), node });
+            this.updatedAt = new Date();
           }
           break;
         case EREQUEST.RECEIVED_CHEQUES: {
@@ -162,7 +160,7 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
           let totalHoneyReceived = 0;
           Object.entries(d.result).forEach(([key, cheque]) => {
             if (cheque) {
-              const r = peers.get(key);
+              const r = _peers.get(key);
               if (r) {
                 if (r.receivedCheque) {
                   r.receivedCheque.cumulativePayout = cheque.CumulativePayout;
@@ -172,7 +170,7 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
                   r.receivedCheque = new Cheque(cheque);
                 }
               } else
-                peers.set(
+                _peers.set(
                   key,
                   new Peer({
                     swarmAddress: key,
@@ -187,26 +185,13 @@ class Web3Provider extends Component<IWeb3ProviderProps, IWeb3ProviderState> {
           node.totalChequesReceived = Math.floor(
             totalHoneyReceived / PAYMENT_THRESHOLD
           );
-          this.setState({ peers, updatedAt: new Date(), node });
+          this.updatedAt = new Date();
           break;
         }
       }
     }
-  }
-
-  render() {
-    const { peers, updatedAt, node } = this.state;
-    return (
-      <Provider
-        value={{
-          actions: {},
-          state: { updatedAt, peers: Array.from(peers.values()), node }
-        }}
-      >
-        {this.props.children}
-      </Provider>
-    );
+    this.forceUpdate();
   }
 }
 
-export default { Consumer, Provider: Web3Provider };
+export default SwarmConnection;
