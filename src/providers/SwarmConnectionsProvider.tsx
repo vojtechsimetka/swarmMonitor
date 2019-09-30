@@ -48,7 +48,10 @@ class SwarmConnectionProvider extends Component<
         connections
       );
       cs.forEach(c => this.addConnection(c.connectionString, c.label));
-    } else this.addConnection("ws://127.0.0.1:8546", "localhost:8546");
+    } else {
+      this.addConnection("ws://127.0.0.1:8546", "Local");
+      this.addConnection("ws://104.248.85.109:8546", "Workshop Server");
+    }
   }
   componentWillUnmount() {
     this.state.connections.forEach(c => c.close());

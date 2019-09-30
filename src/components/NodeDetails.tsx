@@ -120,7 +120,7 @@ export default ({
         ))}
       </tbody>
     </Table>
-    <h2>Balances (honey):</h2>
+    <h2>Balances:</h2>
     <Table striped responsive bordered hover size="sm">
       <thead>
         <tr>
@@ -163,7 +163,7 @@ export default ({
         ))}
       </tbody>
     </Table>
-    <h2>Cheques (honey):</h2>
+    <h2>Cheques:</h2>
     {peers && (
       <Tab.Container defaultActiveKey={0}>
         <Row>
