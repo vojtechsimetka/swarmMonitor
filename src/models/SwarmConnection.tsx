@@ -2,7 +2,7 @@ import Cheque, { IChequeParams } from "models/Cheque";
 import Peer from "models/Peer";
 import Node from "models/Node";
 
-export const PAYMENT_THRESHOLD = 1000000;
+export const PAYMENT_THRESHOLD = 21080828914898;
 
 enum EREQUEST {
   BALANCES = "swap_balances",

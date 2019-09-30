@@ -13,6 +13,7 @@ import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
 
 import Node from "models/Node";
 import Peer from "models/Peer";
+import { PAYMENT_THRESHOLD } from "models/SwarmConnection";
 
 interface INodeDetailsProps {
   updatedAt?: Date;
@@ -23,8 +24,6 @@ interface INodeDetailsProps {
 }
 
 const formatter = new Intl.NumberFormat("en-us");
-
-const PAYMENT_THRESHOLD = 1000000;
 
 export default ({
   updatedAt,
