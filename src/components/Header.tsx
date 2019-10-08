@@ -18,10 +18,16 @@ export default () => (
           target="blank"
           href="https://github.com/ethersphere/devconV/tree/master/WORKSHOPS/Incentivized"
         >
-          Instructions
+          Instructions (online)
+        </Nav.Link>
+        <Nav.Link target="blank" href="/instructions.md">
+          Instructions (offline)
         </Nav.Link>
         <Nav.Link target="blank" href="http://192.168.55.102/">
           Faucet
+        </Nav.Link>
+        <Nav.Link target="blank" href="http://192.168.55.103:9999/DOWNLOADS/">
+          Binaries
         </Nav.Link>
         <AddConnectionButton variant="outline-primary" />
       </Nav>
