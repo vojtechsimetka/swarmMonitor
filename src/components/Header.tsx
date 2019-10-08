@@ -16,7 +16,7 @@ export default () => (
       <Nav className="ml-auto justify-content-end">
         <Nav.Link
           target="blank"
-          href="https://github.com/ethersphere/devconV/tree/master/WORKSHOPS/Incentivized"
+          href="https://github.com/ethersphere/devconV/blob/master/WORKSHOPS/Incentivized/WORKSHOP.md"
         >
           Instructions (online)
         </Nav.Link>
