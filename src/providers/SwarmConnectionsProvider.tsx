@@ -51,9 +51,9 @@ class SwarmConnectionProvider extends Component<
     } else {
       try {
         this.addConnection("ws://127.0.0.1:8546", "Local");
-        this.addConnection("ws://192.168.55.102:8546", "Bootnode");
       } catch (e) {}
       try {
+        this.addConnection("ws://192.168.55.102:8546", "Bootnode");
       } catch (e) {}
     }
   }

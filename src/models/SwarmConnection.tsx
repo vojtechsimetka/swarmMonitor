@@ -111,7 +111,7 @@ class SwarmConnection {
         case EREQUEST.BALANCES: {
           const d: Response<number> = JSON.parse(e.data);
           let b = 0;
-          Object.entries(d.result).forEach(([key, balance]) => {
+          [...Object.entries(d.result)].forEach(([key, balance]) => {
             const r = _peers.get(key);
             if (r) r.balance = balance;
             else _peers.set(key, new Peer({ balance, swarmAddress: key }));
@@ -125,7 +125,7 @@ class SwarmConnection {
           {
             const d: Response<IChequeParams> = JSON.parse(e.data);
             let totalHoneySent = 0;
-            Object.entries(d.result).forEach(([key, cheque]) => {
+            [...Object.entries(d.result)].forEach(([key, cheque]) => {
               if (cheque) {
                 const r = _peers.get(key);
                 if (r) {
@@ -158,7 +158,7 @@ class SwarmConnection {
         case EREQUEST.RECEIVED_CHEQUES: {
           const d: Response<IChequeParams> = JSON.parse(e.data);
           let totalHoneyReceived = 0;
-          Object.entries(d.result).forEach(([key, cheque]) => {
+          [...Object.entries(d.result)].forEach(([key, cheque]) => {
             if (cheque) {
               const r = _peers.get(key);
               if (r) {
