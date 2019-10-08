@@ -14,8 +14,14 @@ export default () => (
     <Navbar.Toggle aria-controls="basic-navbar-nav" />
     <Navbar.Collapse id="basic-navbar-nav">
       <Nav className="ml-auto justify-content-end">
-        <Nav.Link href="https://github.com/ethersphere/devconV/tree/master/WORKSHOPS/Incentivized">
+        <Nav.Link
+          target="blank"
+          href="https://github.com/ethersphere/devconV/tree/master/WORKSHOPS/Incentivized"
+        >
           Instructions
+        </Nav.Link>
+        <Nav.Link target="blank" href="http://192.168.55.102/">
+          Faucet
         </Nav.Link>
         <AddConnectionButton variant="outline-primary" />
       </Nav>
