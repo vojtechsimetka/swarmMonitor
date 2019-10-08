@@ -53,7 +53,6 @@ class SwarmConnectionProvider extends Component<
         this.addConnection("ws://127.0.0.1:8546", "Local");
       } catch (e) {}
       try {
-        this.addConnection("ws://104.248.85.109:8546", "Workshop Server");
       } catch (e) {}
     }
   }
