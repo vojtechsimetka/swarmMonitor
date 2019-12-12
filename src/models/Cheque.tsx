@@ -20,10 +20,10 @@ export default class Cheque {
     Honey,
     Signature
   }: IChequeParams) {
-    this.beneficiary = Beneficiary;
-    this.contract = Contract;
-    this.honey = Honey;
-    this.cumulativePayout = CumulativePayout;
-    this.signature = Signature;
+    this.beneficiary = Beneficiary || "";
+    this.contract = Contract || "";
+    this.honey = Honey || 0;
+    this.cumulativePayout = CumulativePayout || 0;
+    this.signature = Signature || "";
   }
 }

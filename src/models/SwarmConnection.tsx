@@ -6,14 +6,9 @@ export const PAYMENT_THRESHOLD = 21080828914898;
 
 enum EREQUEST {
   BALANCES = "swap_balances",
-  SENT_CHEQUES = "swap_sentCheques",
-  RECEIVED_CHEQUES = "swap_receivedCheques"
+  CHEQUES = "swap_cheques"
 }
-const REQUESTS = [
-  EREQUEST.BALANCES,
-  EREQUEST.SENT_CHEQUES,
-  EREQUEST.RECEIVED_CHEQUES
-];
+const REQUESTS = [EREQUEST.BALANCES, EREQUEST.CHEQUES];
 
 export enum ESTATUS {
   ACTIVE,
@@ -121,73 +116,71 @@ class SwarmConnection {
           this.updatedAt = new Date();
           break;
         }
-        case EREQUEST.SENT_CHEQUES:
+        case EREQUEST.CHEQUES:
           {
-            const d: Response<IChequeParams> = JSON.parse(e.data);
+            const d: Response<{
+              LastSentCheque: IChequeParams;
+              LastReceivedCheque: IChequeParams;
+            }> = JSON.parse(e.data);
             let totalHoneySent = 0;
+            let totalHoneyReceived = 0;
             [...Object.entries(d.result)].forEach(([key, cheque]) => {
               if (cheque) {
                 const r = _peers.get(key);
                 if (r) {
                   if (r.sentCheque) {
-                    r.sentCheque.cumulativePayout = cheque.CumulativePayout;
-                    r.sentCheque.signature = cheque.Signature;
-                    r.sentCheque.honey = cheque.Honey;
+                    r.sentCheque.cumulativePayout =
+                      cheque.LastSentCheque.CumulativePayout;
+                    r.sentCheque.signature = cheque.LastSentCheque.Signature;
+                    r.sentCheque.honey = cheque.LastSentCheque.Honey;
                   } else if (!r.sentCheque) {
-                    r.sentCheque = new Cheque(cheque);
+                    r.sentCheque = new Cheque(cheque.LastSentCheque);
                   }
                 } else
                   _peers.set(
                     key,
                     new Peer({
                       swarmAddress: key,
-                      sentCheque: new Cheque(cheque)
+                      sentCheque: new Cheque(cheque.LastSentCheque)
                     })
                   );
-                totalHoneySent += cheque.CumulativePayout;
-                node.chequebookAddress = cheque.Contract;
+                totalHoneySent += cheque.LastSentCheque.CumulativePayout;
+                node.chequebookAddress = cheque.LastSentCheque.Contract;
+
+                if (r) {
+                  if (r.receivedCheque) {
+                    r.receivedCheque.cumulativePayout =
+                      cheque.LastReceivedCheque.CumulativePayout;
+                    r.receivedCheque.signature =
+                      cheque.LastReceivedCheque.Signature;
+                    r.receivedCheque.honey = cheque.LastReceivedCheque.Honey;
+                  } else if (!r.receivedCheque) {
+                    r.receivedCheque = new Cheque(cheque.LastReceivedCheque);
+                  }
+                } else
+                  _peers.set(
+                    key,
+                    new Peer({
+                      swarmAddress: key,
+                      receivedCheque: new Cheque(cheque.LastReceivedCheque)
+                    })
+                  );
+                totalHoneyReceived +=
+                  cheque.LastReceivedCheque.CumulativePayout;
+                node.chequebookAddress = cheque.LastReceivedCheque.Contract;
               }
             });
             node.totalHoneySent = totalHoneySent;
             node.totalChequesSent = Math.floor(
               totalHoneySent / PAYMENT_THRESHOLD
             );
+            node.totalHoneyReceived = totalHoneyReceived;
+            node.totalChequesReceived = Math.floor(
+              totalHoneyReceived / PAYMENT_THRESHOLD
+            );
             this.updatedAt = new Date();
           }
           break;
-        case EREQUEST.RECEIVED_CHEQUES: {
-          const d: Response<IChequeParams> = JSON.parse(e.data);
-          let totalHoneyReceived = 0;
-          [...Object.entries(d.result)].forEach(([key, cheque]) => {
-            if (cheque) {
-              const r = _peers.get(key);
-              if (r) {
-                if (r.receivedCheque) {
-                  r.receivedCheque.cumulativePayout = cheque.CumulativePayout;
-                  r.receivedCheque.signature = cheque.Signature;
-                  r.receivedCheque.honey = cheque.Honey;
-                } else if (!r.receivedCheque) {
-                  r.receivedCheque = new Cheque(cheque);
-                }
-              } else
-                _peers.set(
-                  key,
-                  new Peer({
-                    swarmAddress: key,
-                    receivedCheque: new Cheque(cheque)
-                  })
-                );
-              totalHoneyReceived += cheque.CumulativePayout;
-              node.address = cheque.Beneficiary;
-            }
-          });
-          node.totalHoneyReceived = totalHoneyReceived;
-          node.totalChequesReceived = Math.floor(
-            totalHoneyReceived / PAYMENT_THRESHOLD
-          );
-          this.updatedAt = new Date();
-          break;
-        }
       }
     }
     this.forceUpdate();

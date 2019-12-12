@@ -50,10 +50,13 @@ class SwarmConnectionProvider extends Component<
       cs.forEach(c => this.addConnection(c.connectionString, c.label));
     } else {
       try {
-        this.addConnection("ws://127.0.0.1:8546", "Local");
+        this.addConnection("ws://127.0.0.1:8546", "Local 1");
       } catch (e) {}
       try {
-        this.addConnection("ws://192.168.55.102:8546", "Bootnode");
+        this.addConnection("ws://127.0.0.1:8556", "Local 2");
+      } catch (e) {}
+      try {
+        this.addConnection("ws://127.0.0.1:8557", "Local 3");
       } catch (e) {}
     }
   }
